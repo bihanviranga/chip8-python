@@ -56,21 +56,21 @@ class cpu(pyglet.window.Window):
         # Mapping opcodes to functions
         self.func_map = {
             0x0: self.ins_0XXX,
-            # 0x1: self.ins_1XXX,
-            # 0x2: self.ins_2XXX,
-            # 0x3: self.ins_3XXX,
-            # 0x4: self.ins_4XXX,
-            # 0x5: self.ins_5XXX,
-            # 0x6: self.ins_6XXX,
-            # 0x7: self.ins_7XXX,
-            # 0x8: self.ins_8XXX,
-            # 0x9: self.ins_9XXX,
-            # 0xa: self.ins_AXXX,
-            # 0xb: self.ins_BXXX,
-            # 0xc: self.ins_CXXX,
-            # 0xd: self.ins_DXXX,
-            # 0xe: self.ins_EXXX,
-            # 0xf: self.ins_FXXX
+            0x1: self.ins_1XXX,
+            0x2: self.ins_2XXX,
+            0x3: self.ins_3XXX,
+            0x4: self.ins_4XXX,
+            0x5: self.ins_5XXX,
+            0x6: self.ins_6XXX,
+            0x7: self.ins_7XXX,
+            0x8: self.ins_8XXX,
+            0x9: self.ins_9XXX,
+            0xa: self.ins_AXXX,
+            0xb: self.ins_BXXX,
+            0xc: self.ins_CXXX,
+            0xd: self.ins_DXXX,
+            0xe: self.ins_EXXX,
+            0xf: self.ins_FXXX
         }
 
         # TODO implement this
@@ -107,7 +107,7 @@ class cpu(pyglet.window.Window):
             # Call the necessary method
             # self.func_map[extracted_op]()
             # For testing, call the same op
-            self.func_map[0]()
+            self.func_map[extracted_op]()
         except:
             log("Unknown instruction: %x" % self.opcode, "error")
 
@@ -125,4 +125,66 @@ class cpu(pyglet.window.Window):
         pass
 
     def ins_0XXX(self):
-        log("Instruction recieved: %s" % self.opcode, "info", 1)
+        if (self.vx == 0x0 and self.vy == 0xe):
+            nibble = self.opcode & 0x000f
+            if (nibble == 0x0):
+                self.ins_00E0()
+            elif (nibble == 0xe):
+                self.ins_00EE()
+
+    def ins_1XXX(self):
+        log("Instruction Not implemented: 1XXX: %s" % self.opcode, "info", 1)
+
+    def ins_2XXX(self):
+        log("Instruction Not implemented: 2XXX: %s" % self.opcode, "info", 1)
+
+    def ins_3XXX(self):
+        log("Instruction Not implemented: 3XXX: %s" % self.opcode, "info", 1)
+
+    def ins_4XXX(self):
+        log("Instruction Not implemented: 4XXX: %s" % self.opcode, "info", 1)
+
+    def ins_5XXX(self):
+        log("Instruction Not implemented: 5XXX: %s" % self.opcode, "info", 1)
+
+    def ins_6XXX(self):
+        log("Instruction Not implemented: 6XXX: %s" % self.opcode, "info", 1)
+
+    def ins_7XXX(self):
+        log("Instruction Not implemented: 7XXX: %s" % self.opcode, "info", 1)
+
+    def ins_8XXX(self):
+        log("Instruction Not implemented: 8XXX: %s" % self.opcode, "info", 1)
+
+    def ins_9XXX(self):
+        log("Instruction Not implemented: 9XXX: %s" % self.opcode, "info", 1)
+
+    def ins_AXXX(self):
+        log("Instruction Not implemented: AXXX: %s" % self.opcode, "info", 1)
+
+    def ins_BXXX(self):
+        log("Instruction Not implemented: BXXX: %s" % self.opcode, "info", 1)
+
+    def ins_CXXX(self):
+        log("Instruction Not implemented: CXXX: %s" % self.opcode, "info", 1)
+
+    def ins_DXXX(self):
+        log("Instruction Not implemented: DXXX: %s" % self.opcode, "info", 1)
+
+    def ins_EXXX(self):
+        log("Instruction Not implemented: EXXX: %s" % self.opcode, "info", 1)
+
+    def ins_FXXX(self):
+        log("Instruction Not implemented: FXXX: %s" % self.opcode, "info", 1)
+
+    # CLS
+    # Clear the display
+    def ins_00E0(self):
+        log("[INS] 00E0", "info", 1)
+        self.display_buffer = [0] * 64 * 32
+
+    # RET
+    # Return from a subroutine
+    def ins_00EE(self):
+        log("[INS] 00EE", "info", 1)
+        self.pc = self.stack.pop()
