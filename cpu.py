@@ -149,12 +149,17 @@ class cpu():
 
     def ins_5XXX(self):
         log("Instruction Not implemented: 5XXX: %s" % self.opcode, "error")
+        nibble = self.opcode & 0x000f
+        if (nibble == 0x0):
+            self.ins_5xy0()
+        else:
+            log("Ignoring unknown instruction: %s" % self.opcode, "info", 2)
 
     def ins_6XXX(self):
-        log("Instruction Not implemented: 6XXX: %s" % self.opcode, "error")
+        self.ins_6xkk()
 
     def ins_7XXX(self):
-        log("Instruction Not implemented: 7XXX: %s" % self.opcode, "error")
+        self.ins_7xkk()
 
     def ins_8XXX(self):
         log("Instruction Not implemented: 8XXX: %s" % self.opcode, "error")
@@ -223,3 +228,22 @@ class cpu():
         kk = self.opcode & 0x00ff
         if (kk != self.gpio[self.vx]):
             self.pc += 2
+
+    # SE Vx, Vy
+    # Skip next instruction if Vx = Vy
+    def ins_5xy0(self):
+        log("[INS] 5xy0", "info", 1)
+        if (self.gpio[self.vx] == self.gpio[self.vy]):
+            self.pc += 2
+
+    # LD Vx, byte
+    # Set Vx = kk
+    def ins_6xkk(self):
+        kk = self.opcode & 0x00ff
+        self.gpio[self.vx] = kk
+
+    # ADD Vx, byte
+    # Set Vx = Vx + kk
+    def ins_7xkk(self):
+        kk = self.opcode & 0x00ff
+        self.gpio[self.vx] += kk
