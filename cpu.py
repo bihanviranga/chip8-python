@@ -1,4 +1,5 @@
 import random
+import binascii
 
 rom_name = "test_opcode.ch8"
 log_enabled = True
@@ -36,6 +37,7 @@ class cpu():
             # TODO: self.handle_events()
             self.cycle()
             self.draw()
+            # TODO: temp. artificial break
             if (self.ops_run > 1000):
                 break
 
@@ -88,30 +90,34 @@ class cpu():
 
     def load_rom(self, rom_path):
         log("Loading ROM %s" % rom_path, "info", 2)
-        binary = open(rom_path, "rb").read()
-        i = 0
-        while i < len(binary):
-            # Previously ord(binary[i])
-            # But since open() with "rb" mode gives bytes
-            # we won't cast it to an int
-            self.memory[i+0x200] = binary[i]
-            i += 1
+
+        piece_size = 1 # How many bytes to read at once
+        with open(rom_path, "rb") as rom_file:
+            for i in range(len(self.memory)):
+                piece = rom_file.read(piece_size)
+                if piece == b'':
+                    break
+
+                hex_piece = binascii.hexlify(piece)
+                as_int = int(hex_piece, 16)
+                self.memory[0x200 + i] = as_int
 
     def cycle(self):
-        self.opcode = self.memory[self.pc]
+        op_bytes = self.memory[self.pc: self.pc+2]
+        self.opcode = op_bytes[0] * 0x100 + op_bytes[1]
+        log("[OPCODE] %04x" % self.opcode, "info", 1)
 
         self.vx = (self.opcode & 0x0f00) >> 8
         self.vy = (self.opcode & 0x00f0) >> 4
         # an opcode is 2 bytes long
         self.pc += 2
 
-        extracted_op = self.opcode & 0xf000 >> 12  # shouldn't shift?
+        extracted_op = (self.opcode & 0xf000 )>> 12  # shouldn't shift?
         self.ops_run += 1 # Temporary
 
         try:
             # Call the necessary method
             # self.func_map[extracted_op]()
-            # For testing, call the same op
             self.func_map[extracted_op]()
         except:
             log("Unknown instruction: %x" % self.opcode, "error")
@@ -136,6 +142,7 @@ class cpu():
     # TODO stub
     # returns whether collision was true or not
     def mark_pixels(self, sprite):
+        log("[DRAW] Marking %x" % sprite, "info", 1)
         return True
 
     def ins_0XXX(self):
@@ -243,9 +250,9 @@ class cpu():
     # JP addr
     # Jump to location nnn
     def ins_1nnn(self):
-        log("[INS] 1nnn", "info", 1)
         addr = self.opcode & 0x0fff
-        self.pc = 0x200 + addr # 0x200 part because it has to be in ROM?
+        log("[INS] 1nnn JP %x" % addr, "info", 1)
+        self.pc = addr
 
     # CALL addr
     # Call subroutine at nnn
@@ -253,7 +260,7 @@ class cpu():
         log("[INS] 2nnn", "info", 1)
         addr = self.opcode & 0x0fff
         self.stack.append(self.pc)
-        self.pc = 0x200 + addr # 0x200 part because it has to be in ROM?
+        self.pc = addr
 
     # SE Vx, byte
     # Skip next instruction if Vx = kk
@@ -414,8 +421,9 @@ class cpu():
         log("[INS] Dxyn", "info", 1)
 
         self.should_draw = True
-        nibble = self.opcode & 0x000f
-        sprite = self.memory[0x200 + self.index: nibble]
+        size = self.opcode & 0x000f
+        start = self.index
+        sprite = self.memory[start:size]
         collision = self.mark_pixels(sprite)
 
         if (collision):
