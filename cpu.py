@@ -44,7 +44,7 @@ class cpu():
         self.gpio = [0] * 16                # registers
         self.display_buffer = [0] * 64 * 32  # 64x32 screen
         self.stack = []
-        self.key_inputs = [0] * 16          # Input keys state
+        self.key_inputs = [0] * 16          # Input keys state - 1 = down position/pressed
         self.opcode = 0
         self.index = 0
         self.ops_run = 0 # Temporary - number of ops
@@ -127,7 +127,16 @@ class cpu():
 
     # TODO implement this stub
     def draw(self):
-        pass
+        if self.should_draw:
+            log("[DRAW] Drawing...", "info", 1)
+
+        # Once finished, reset the variable
+        self.should_draw = False
+
+    # TODO stub
+    # returns whether collision was true or not
+    def mark_pixels(self, sprite):
+        return True
 
     def ins_0XXX(self):
         if (self.vx == 0x0 and self.vy == 0xe):
@@ -154,7 +163,6 @@ class cpu():
         self.ins_4xkk()
 
     def ins_5XXX(self):
-        log("Instruction Not implemented: 5XXX: %s" % self.opcode, "error")
         nibble = self.opcode & 0x000f
         if (nibble == 0x0):
             self.ins_5xy0()
@@ -204,10 +212,17 @@ class cpu():
         self.ins_Cxkk()
 
     def ins_DXXX(self):
-        log("Instruction Not implemented: DXXX: %s" % self.opcode, "error")
+        self.ins_Dxyn()
 
     def ins_EXXX(self):
-        log("Instruction Not implemented: EXXX: %s" % self.opcode, "error")
+        low_byte = self.opcode & 0x00ff
+        if (low_byte == 0x9E):
+            self.ins_Ex9E()
+        elif (low_byte == 0xA1):
+            self.ins_ExA1()
+        else:
+            log("[EXXX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
+
 
     def ins_FXXX(self):
         log("Instruction Not implemented: FXXX: %s" % self.opcode, "error")
@@ -374,18 +389,50 @@ class cpu():
     # LD I, addr
     # Set I = nnn
     def ins_Annn(self):
+        log("[INS] Annn", "info", 1)
         addr = self.opcode & 0x0fff
         self.index = addr
 
     # JP V0, addr
     # Jump to location nnn + V0
     def ins_Bnnn(self):
+        log("[INS] Bnnn", "info", 1)
         addr = self.opcode & 0x0fff
         self.pc = 0x200 + addr + self.gpio[0x0] # Note: remove 0x200 offset?
 
     # RND Vx, byte
     # Set Vx = random byte AND kk
     def ins_Cxkk(self):
+        log("[INS] Cxkk", "info", 1)
         random_byte = random.randint(0x0, 0xff)
         kk = self.opcode & 0x00ff
         self.gpio[self.vx] = random_byte & kk
+
+    # DRW Vx, Vy, nibble
+    # Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision
+    def ins_Dxyn(self):
+        log("[INS] Dxyn", "info", 1)
+
+        self.should_draw = True
+        nibble = self.opcode & 0x000f
+        sprite = self.memory[0x200 + self.index: nibble]
+        collision = self.mark_pixels(sprite)
+
+        if (collision):
+            self.gpio[0xf] = 0x1
+        else:
+            self.gpio[0xf] = 0x0
+
+    # SKP Vx
+    # Skip next instruction if key with the value of Vx is pressed
+    def ins_Ex9E(self):
+        log("[INS] Ex9E", "info", 1)
+        if(self.key_inputs[self.vx] == 1):
+            self.pc += 2
+
+    # SKNP Vx
+    # Skip next instruction if key with the value of Vx is not pressed
+    def ins_ExA1(self):
+        log("[INS] ExA1", "info", 1)
+        if (self.key_inputs[self.vx] == 0):
+            self.pc +=2
