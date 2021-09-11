@@ -6,7 +6,7 @@ log_enabled = True
 log_level = 1
 
 
-def log(message, message_type="info", level=1):
+def log(message, message_type="info", level=3):
     if not log_enabled:
         return
 
@@ -130,6 +130,10 @@ class cpu():
                 self.ins_00E0()
             elif (nibble == 0xe):
                 self.ins_00EE()
+            else:
+                log("Ignoring unknown instruction: %s" % self.opcode, "info", 2)
+        else:
+            log("Ignoring unknown instruction: %s" % self.opcode, "info", 2)
 
     def ins_1XXX(self):
         self.ins_1nnn()
@@ -138,10 +142,10 @@ class cpu():
         self.ins_2nnn()
 
     def ins_3XXX(self):
-        log("Instruction Not implemented: 3XXX: %s" % self.opcode, "error")
+        self.ins_3xkk()
 
     def ins_4XXX(self):
-        log("Instruction Not implemented: 4XXX: %s" % self.opcode, "error")
+        self.ins_4xkk()
 
     def ins_5XXX(self):
         log("Instruction Not implemented: 5XXX: %s" % self.opcode, "error")
@@ -203,3 +207,19 @@ class cpu():
         addr = self.opcode & 0x0fff
         self.stack.append(self.pc)
         self.pc = 0x200 + addr # 0x200 part because it has to be in ROM?
+
+    # SE Vx, byte
+    # Skip next instruction if Vx = kk
+    def ins_3xkk(self):
+        log("[INS] 3xkk", "info", 1)
+        kk = self.opcode & 0x00ff
+        if (kk == self.gpio[self.vx]):
+            self.pc += 2
+
+    # SNE Vx, byte
+    # Skip next instruction if Vx != kk
+    def ins_4xkk(self):
+        log("[INS] 4xkk", "info", 1)
+        kk = self.opcode & 0x00ff
+        if (kk != self.gpio[self.vx]):
+            self.pc += 2
