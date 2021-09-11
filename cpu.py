@@ -162,7 +162,28 @@ class cpu():
         self.ins_7xkk()
 
     def ins_8XXX(self):
-        log("Instruction Not implemented: 8XXX: %s" % self.opcode, "error")
+        nibble = self.opcode & 0x000f
+        if (nibble == 0x0):
+            self.ins_8xy0()
+        elif (nibble == 0x1):
+            self.ins_8xy1()
+        elif (nibble == 0x2):
+            self.ins_8xy2()
+        elif (nibble == 0x3):
+            self.ins_8xy3()
+        elif (nibble == 0x4):
+            self.ins_8xy4()
+        elif (nibble == 0x5):
+            self.ins_8xy5()
+        elif (nibble == 0x6):
+            self.ins_8xy6()
+        elif (nibble == 0x7):
+            self.ins_8xy7()
+        elif (nibble == 0xE):
+            self.ins_8xyE()
+        else:
+            log("Ignoring unknown instruction: %s" % self.opcode, "info", 2)
+
 
     def ins_9XXX(self):
         log("Instruction Not implemented: 9XXX: %s" % self.opcode, "error")
@@ -239,11 +260,68 @@ class cpu():
     # LD Vx, byte
     # Set Vx = kk
     def ins_6xkk(self):
+        log("[INS] 6xkk", "info", 1)
         kk = self.opcode & 0x00ff
         self.gpio[self.vx] = kk
 
     # ADD Vx, byte
     # Set Vx = Vx + kk
     def ins_7xkk(self):
+        log("[INS] 7xkk", "info", 1)
         kk = self.opcode & 0x00ff
         self.gpio[self.vx] += kk
+
+    # LD Vx, Vy
+    # Set Vx = Vy
+    def ins_8xy0(self):
+        log("[INS] 8xy0", "info", 1)
+        self.gpio[self.vx] = self.gpio[self.vy]
+
+    # OR Vx, Vy
+    # Set Vx = Vx OR Vy
+    def ins_8xy1(self):
+        log("[INS] 8xy1", "info", 1)
+        self.gpio[self.vx] = self.gpio[self.vx] | self.gpio[self.vy]
+
+    # AND Vx, Vy
+    # Set Vx = Vx AND Vy
+    def ins_8xy2(self):
+        log("[INS] 8xy2", "info", 1)
+        self.gpio[self.vx] = self.gpio[self.vx] & self.gpio[self.vy]
+
+    # XOR Vx, Vy
+    # Set Vx = Vx XOR Vy
+    def ins_8xy3(self):
+        log("[INS] 8xy3", "info", 1)
+        self.gpio[self.vx] = self.gpio[self.vx] ^ self.gpio[self.vy]
+
+    # ADD Vx, Vy
+    # Set Vx = Vx + Vy, set VF = carry
+    def ins_8xy4(self):
+        log("[INS] 8xy4", "info", 1)
+        result = self.gpio[self.vx] + self.gpio[self.vy]
+        self.gpio[self.vx] = result & 0x00ff
+        # Setting the carry flag
+        if (result > 0xff):
+            self.gpio[0xf] = 0x1
+        else:
+            self.gpio[0xf] = 0x0
+
+    # SUB Vx, Vy
+    # Set Vx = Vx - Vy, set VF = NOT borrow
+    def ins_8xy5(self):
+        log("[INS] 8xy5", "info", 1)
+        self.gpio[self.vx] = self.gpio[self.vx] - self.gpio[self.vy]
+        if self.gpio[self.vx] > self.gpio[self.vy]:
+            self.gpio[0xf] = 1
+        else:
+            self.gpio[0xf] = 0
+
+    def ins_8xy6(self):
+        pass
+
+    def ins_8xy7(self):
+        pass
+
+    def ins_8xyE(self):
+        pass
