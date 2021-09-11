@@ -142,8 +142,15 @@ class cpu():
     # TODO stub
     # returns whether collision was true or not
     def mark_pixels(self, sprite):
-        log("[DRAW] Marking %x" % sprite, "info", 1)
+        log("[DRAW] Marking...", "info", 1)
+        print("sprite:", sprite) # TODO remove
         return True
+
+    # TODO stub
+    # Halt all execution and wait until a key is pressed
+    def wait_for_key(self):
+        log("[INPUT] Waiting for key", "info", 1)
+        return 0x1
 
     def ins_0XXX(self):
         if (self.vx == 0x0 and self.vy == 0xe):
@@ -232,7 +239,19 @@ class cpu():
 
 
     def ins_FXXX(self):
-        log("Instruction Not implemented: FXXX: %s" % self.opcode, "error")
+        low_byte = self.opcode & 0x00ff
+        if (low_byte == 0x07):
+            self.ins_Fx07()
+        elif (low_byte == 0x0A):
+            self.ins_Fx0A()
+        elif (low_byte == 0x15):
+            self.ins_Fx15()
+        elif (low_byte == 0x18):
+            self.ins_Fx18()
+        elif (low_byte == 0x1E):
+            self.ins_Fx1E()
+        else:
+            log("[FXXX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
 
     # CLS
     # Clear the display
@@ -423,7 +442,7 @@ class cpu():
         self.should_draw = True
         size = self.opcode & 0x000f
         start = self.index
-        sprite = self.memory[start:size]
+        sprite = self.memory[start:start+size]
         collision = self.mark_pixels(sprite)
 
         if (collision):
@@ -444,3 +463,34 @@ class cpu():
         log("[INS] ExA1", "info", 1)
         if (self.key_inputs[self.vx] == 0):
             self.pc +=2
+
+    # LD Vx, DT
+    # Set Vx = delay timer value
+    def ins_Fx07(self):
+        log("[INS] Fx07", "info", 1)
+        self.gpio[self.vx] = self.delay_timer
+
+    # LD Vx, K
+    # Wait for a key press, store the value of the key in Vx
+    def ins_Fx0A(self):
+        log("[INS] Fx0A", "info", 1)
+        key = self.wait_for_key()
+        self.gpio[self.vx] = key
+
+    # LD DT, Vx
+    # Set delay timer = Vx
+    def ins_Fx15(self):
+        log("[INS] Fx15", "info", 1)
+        self.delay_timer = self.gpio[self.vx]
+
+    # LD ST, Vx
+    # Set sound timer = Vx
+    def ins_Fx18(self):
+        log("[INS] Fx18", "info", 1)
+        self.sound_timer = self.gpio[self.vx]
+
+    # ADD I, Vx
+    # Set I = I + Vx
+    def ins_Fx1E(self):
+        log("[INS] Fx1E", "info", 1)
+        self.index =+ self.vx
