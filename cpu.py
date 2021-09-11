@@ -80,7 +80,7 @@ class cpu():
         }
 
         # TODO implement this
-        self.fonts = [i for i in range(80)]
+        self.fonts = [(i & 0xf) for i in range(80)]
 
         i = 0
         while i < 80:
@@ -105,7 +105,7 @@ class cpu():
     def cycle(self):
         op_bytes = self.memory[self.pc: self.pc+2]
         self.opcode = op_bytes[0] * 0x100 + op_bytes[1]
-        log("[OPCODE] %04x" % self.opcode, "info", 1)
+        # log("[OPCODE] %04x" % self.opcode, "info", 1)
 
         self.vx = (self.opcode & 0x0f00) >> 8
         self.vy = (self.opcode & 0x00f0) >> 4
@@ -250,6 +250,14 @@ class cpu():
             self.ins_Fx18()
         elif (low_byte == 0x1E):
             self.ins_Fx1E()
+        elif (low_byte == 0x29):
+            self.ins_Fx29()
+        elif (low_byte == 0x33):
+            self.ins_Fx33()
+        elif (low_byte == 0x55):
+            self.ins_Fx55()
+        elif (low_byte == 0x65):
+            self.ins_Fx65()
         else:
             log("[FXXX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
 
@@ -494,3 +502,37 @@ class cpu():
     def ins_Fx1E(self):
         log("[INS] Fx1E", "info", 1)
         self.index =+ self.vx
+
+    # LD F, Vx
+    # Set I = location of sprite for digit Vx
+    def ins_Fx29(self):
+        log("[INS] Fx29", "info", 1)
+        font_index = self.vx * 5
+        self.index = font_index
+
+    # LD B, Vx
+    # Store BCD representation of Vx in memory locations I, I+1, and I+2
+    def ins_Fx33(self):
+        log("[INS] Fx33", "info", 1)
+        ones = self.vx % 10
+        tens = self.vx % 100 // 10
+        hundreds = self.vx // 100
+        self.memory[self.index + 2] = ones
+        self.memory[self.index + 1] = tens
+        self.memory[self.index] = hundreds
+
+    # LD [I], Vx
+    # Store registers V0 through Vx in memory starting at location I
+    def ins_Fx55(self):
+        log("[INS] Fx55", "info", 1)
+        limit = self.vx
+        for i in range(limit):
+            self.memory[self.index + i] = self.gpio[i]
+
+    # LD Vx, [I]
+    # Read registers V0 through Vx from memory starting at location I.
+    def ins_Fx65(self):
+        log("[INS] Fx65", "info", 1)
+        limit = self.vx
+        for i in range(limit):
+            self.gpio[i] = self.memory[self.index + 1]
