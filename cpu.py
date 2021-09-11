@@ -132,58 +132,74 @@ class cpu():
                 self.ins_00EE()
 
     def ins_1XXX(self):
-        log("Instruction Not implemented: 1XXX: %s" % self.opcode, "error", 1)
+        self.ins_1nnn()
 
     def ins_2XXX(self):
-        log("Instruction Not implemented: 2XXX: %s" % self.opcode, "error", 1)
+        self.ins_2nnn()
 
     def ins_3XXX(self):
-        log("Instruction Not implemented: 3XXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: 3XXX: %s" % self.opcode, "error")
 
     def ins_4XXX(self):
-        log("Instruction Not implemented: 4XXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: 4XXX: %s" % self.opcode, "error")
 
     def ins_5XXX(self):
-        log("Instruction Not implemented: 5XXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: 5XXX: %s" % self.opcode, "error")
 
     def ins_6XXX(self):
-        log("Instruction Not implemented: 6XXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: 6XXX: %s" % self.opcode, "error")
 
     def ins_7XXX(self):
-        log("Instruction Not implemented: 7XXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: 7XXX: %s" % self.opcode, "error")
 
     def ins_8XXX(self):
-        log("Instruction Not implemented: 8XXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: 8XXX: %s" % self.opcode, "error")
 
     def ins_9XXX(self):
-        log("Instruction Not implemented: 9XXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: 9XXX: %s" % self.opcode, "error")
 
     def ins_AXXX(self):
-        log("Instruction Not implemented: AXXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: AXXX: %s" % self.opcode, "error")
 
     def ins_BXXX(self):
-        log("Instruction Not implemented: BXXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: BXXX: %s" % self.opcode, "error")
 
     def ins_CXXX(self):
-        log("Instruction Not implemented: CXXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: CXXX: %s" % self.opcode, "error")
 
     def ins_DXXX(self):
-        log("Instruction Not implemented: DXXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: DXXX: %s" % self.opcode, "error")
 
     def ins_EXXX(self):
-        log("Instruction Not implemented: EXXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: EXXX: %s" % self.opcode, "error")
 
     def ins_FXXX(self):
-        log("Instruction Not implemented: FXXX: %s" % self.opcode, "error", 1)
+        log("Instruction Not implemented: FXXX: %s" % self.opcode, "error")
 
     # CLS
     # Clear the display
     def ins_00E0(self):
         log("[INS] 00E0", "info", 1)
         self.display_buffer = [0] * 64 * 32
+        self.should_draw = True
 
     # RET
     # Return from a subroutine
     def ins_00EE(self):
         log("[INS] 00EE", "info", 1)
         self.pc = self.stack.pop()
+
+    # JP addr
+    # Jump to location nnn
+    def ins_1nnn(self):
+        log("[INS] 1nnn", "info", 1)
+        addr = self.opcode & 0x0fff
+        self.pc = 0x200 + addr # 0x200 part because it has to be in ROM?
+
+    # CALL addr
+    # Call subroutine at nnn
+    def ins_2nnn(self):
+        log("[INS] 2nnn", "info", 1)
+        addr = self.opcode & 0x0fff
+        self.stack.append(self.pc)
+        self.pc = 0x200 + addr # 0x200 part because it has to be in ROM?
