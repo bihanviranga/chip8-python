@@ -131,9 +131,9 @@ class cpu():
             elif (nibble == 0xe):
                 self.ins_00EE()
             else:
-                log("Ignoring unknown instruction: %s" % self.opcode, "info", 2)
+                log("[00EX] Ignoring unknown instruction: %s" % self.opcode, "info", 2)
         else:
-            log("Ignoring unknown instruction: %s" % self.opcode, "info", 2)
+            log("[0XXX] Ignoring unknown instruction: %s" % self.opcode, "info", 2)
 
     def ins_1XXX(self):
         self.ins_1nnn()
@@ -182,7 +182,7 @@ class cpu():
         elif (nibble == 0xE):
             self.ins_8xyE()
         else:
-            log("Ignoring unknown instruction: %s" % self.opcode, "info", 2)
+            log("[8XXX] Ignoring unknown instruction: %s" % self.opcode, "info", 2)
 
 
     def ins_9XXX(self):
@@ -300,7 +300,7 @@ class cpu():
     def ins_8xy4(self):
         log("[INS] 8xy4", "info", 1)
         result = self.gpio[self.vx] + self.gpio[self.vy]
-        self.gpio[self.vx] = result & 0x00ff
+        self.gpio[self.vx] = result & 0xff
         # Setting the carry flag
         if (result > 0xff):
             self.gpio[0xf] = 0x1
@@ -311,17 +311,49 @@ class cpu():
     # Set Vx = Vx - Vy, set VF = NOT borrow
     def ins_8xy5(self):
         log("[INS] 8xy5", "info", 1)
-        self.gpio[self.vx] = self.gpio[self.vx] - self.gpio[self.vy]
         if self.gpio[self.vx] > self.gpio[self.vy]:
-            self.gpio[0xf] = 1
+            self.gpio[0xf] = 0x1
         else:
-            self.gpio[0xf] = 0
+            self.gpio[0xf] = 0x0
+        self.gpio[self.vx] = self.gpio[self.vx] - self.gpio[self.vy]
+        self.gpio[self.vx] &= 0xff # Wrap values above 0xff to 8 bits
 
+    # SHR Vx {, VY}
+    # Set Vx = Vx SHR 1
     def ins_8xy6(self):
-        pass
+        log("[INS] 8xy6", "info", 1)
+        lsb = self.gpio[self.vx] & 0x0001
+        if (lsb == 0x1):
+            self.gpio[0xf] = 0x1
+        else:
+            self.gpio[0xf] = 0x0
 
+        # NOTE: This line might have to be changed.
+        # Because SHR means shift right, not divide
+        self.gpio[self.vx] //= 2
+
+    # SUBN Vx, Vy
+    # Set Vx = Vy - Vx, set VF = NOT borrow
     def ins_8xy7(self):
-        pass
+        log("[INS] 8xy7", "info", 1)
+        if (self.gpio[self.vy] > self.gpio[self.vx]):
+            self.gpio[0xf] = 0x1
+        else:
+            self.gpio[0xf] = 0x0
+        result = self.gpio[self.vy] - self.gpio[self.vx]
+        self.gpio[self.vx] = result & 0xff
 
+    # SHL Vx {, Vy}
+    # Set Vx = Vx SHL 1
     def ins_8xyE(self):
-        pass
+        log("[INS] 8xyE", "info", 1)
+        msb = self.gpio[self.vx] & 0x8000
+        if (msb == 0x1):
+            self.gpio[0xf] = 0x1
+        else:
+            self.gpio[0xf] = 0x0
+
+        # NOTE: This line might have to be changed.
+        # Because SHL means shift left, not multiply
+        result = self.gpio[self.vx] * 2
+        self.gpio[self.vx] =  result & 0xff
