@@ -1,5 +1,3 @@
-import pyglet.window
-
 rom_name = "test_opcode.ch8"
 log_enabled = True
 # 1 = print everything
@@ -27,18 +25,17 @@ def log(message, message_type="info", level=1):
             print(log_message_type_symbols[message_type], message)
 
 
-class cpu(pyglet.window.Window):
+class cpu():
     def main(self):
         self.initialize()
         self.load_rom(rom_name)
 
-        while not self.has_exit:
-            self.dispatch_events()
+        while self.running:
+            # TODO: self.handle_events()
             self.cycle()
             self.draw()
 
     def initialize(self):
-        self.clear()
         self.memory = [0] * 4096            # 4096 Bytes of memory
         self.gpio = [0] * 16                # registers
         self.display_buffer = [0] * 64 * 32  # 64x32 screen
@@ -46,6 +43,8 @@ class cpu(pyglet.window.Window):
         self.key_inputs = [0] * 16          # Input keys state
         self.opcode = 0
         self.index = 0
+
+        self.running = True # power switch
 
         self.delay_timer = 0
         self.sound_timer = 0
@@ -117,7 +116,7 @@ class cpu(pyglet.window.Window):
         if self.sound_timer > 0:
             self.sound_timer -= 1
             if self.sound_timer != 0:
-                # play sound here, while sound timer is on
+                # TODO play sound here, while sound timer is on
                 pass
 
     # TODO implement this stub
@@ -133,49 +132,49 @@ class cpu(pyglet.window.Window):
                 self.ins_00EE()
 
     def ins_1XXX(self):
-        log("Instruction Not implemented: 1XXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: 1XXX: %s" % self.opcode, "error", 1)
 
     def ins_2XXX(self):
-        log("Instruction Not implemented: 2XXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: 2XXX: %s" % self.opcode, "error", 1)
 
     def ins_3XXX(self):
-        log("Instruction Not implemented: 3XXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: 3XXX: %s" % self.opcode, "error", 1)
 
     def ins_4XXX(self):
-        log("Instruction Not implemented: 4XXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: 4XXX: %s" % self.opcode, "error", 1)
 
     def ins_5XXX(self):
-        log("Instruction Not implemented: 5XXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: 5XXX: %s" % self.opcode, "error", 1)
 
     def ins_6XXX(self):
-        log("Instruction Not implemented: 6XXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: 6XXX: %s" % self.opcode, "error", 1)
 
     def ins_7XXX(self):
-        log("Instruction Not implemented: 7XXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: 7XXX: %s" % self.opcode, "error", 1)
 
     def ins_8XXX(self):
-        log("Instruction Not implemented: 8XXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: 8XXX: %s" % self.opcode, "error", 1)
 
     def ins_9XXX(self):
-        log("Instruction Not implemented: 9XXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: 9XXX: %s" % self.opcode, "error", 1)
 
     def ins_AXXX(self):
-        log("Instruction Not implemented: AXXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: AXXX: %s" % self.opcode, "error", 1)
 
     def ins_BXXX(self):
-        log("Instruction Not implemented: BXXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: BXXX: %s" % self.opcode, "error", 1)
 
     def ins_CXXX(self):
-        log("Instruction Not implemented: CXXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: CXXX: %s" % self.opcode, "error", 1)
 
     def ins_DXXX(self):
-        log("Instruction Not implemented: DXXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: DXXX: %s" % self.opcode, "error", 1)
 
     def ins_EXXX(self):
-        log("Instruction Not implemented: EXXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: EXXX: %s" % self.opcode, "error", 1)
 
     def ins_FXXX(self):
-        log("Instruction Not implemented: FXXX: %s" % self.opcode, "info", 1)
+        log("Instruction Not implemented: FXXX: %s" % self.opcode, "error", 1)
 
     # CLS
     # Clear the display
