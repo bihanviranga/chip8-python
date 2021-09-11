@@ -1,3 +1,5 @@
+import random
+
 rom_name = "test_opcode.ch8"
 log_enabled = True
 # 1 = print everything
@@ -34,6 +36,8 @@ class cpu():
             # TODO: self.handle_events()
             self.cycle()
             self.draw()
+            if (self.ops_run > 1000):
+                break
 
     def initialize(self):
         self.memory = [0] * 4096            # 4096 Bytes of memory
@@ -43,6 +47,7 @@ class cpu():
         self.key_inputs = [0] * 16          # Input keys state
         self.opcode = 0
         self.index = 0
+        self.ops_run = 0 # Temporary - number of ops
 
         self.running = True # power switch
 
@@ -101,6 +106,7 @@ class cpu():
         self.pc += 2
 
         extracted_op = self.opcode & 0xf000 >> 12  # shouldn't shift?
+        self.ops_run += 1 # Temporary
 
         try:
             # Call the necessary method
@@ -131,9 +137,9 @@ class cpu():
             elif (nibble == 0xe):
                 self.ins_00EE()
             else:
-                log("[00EX] Ignoring unknown instruction: %s" % self.opcode, "info", 2)
+                log("[00EX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
         else:
-            log("[0XXX] Ignoring unknown instruction: %s" % self.opcode, "info", 2)
+            log("[0XXX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
 
     def ins_1XXX(self):
         self.ins_1nnn()
@@ -153,7 +159,7 @@ class cpu():
         if (nibble == 0x0):
             self.ins_5xy0()
         else:
-            log("Ignoring unknown instruction: %s" % self.opcode, "info", 2)
+            log("[5XXX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
 
     def ins_6XXX(self):
         self.ins_6xkk()
@@ -182,20 +188,20 @@ class cpu():
         elif (nibble == 0xE):
             self.ins_8xyE()
         else:
-            log("[8XXX] Ignoring unknown instruction: %s" % self.opcode, "info", 2)
+            log("[8XXX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
 
 
     def ins_9XXX(self):
-        log("Instruction Not implemented: 9XXX: %s" % self.opcode, "error")
+        self.ins_9xy0()
 
     def ins_AXXX(self):
-        log("Instruction Not implemented: AXXX: %s" % self.opcode, "error")
+        self.ins_Annn()
 
     def ins_BXXX(self):
-        log("Instruction Not implemented: BXXX: %s" % self.opcode, "error")
+        self.ins_Bnnn()
 
     def ins_CXXX(self):
-        log("Instruction Not implemented: CXXX: %s" % self.opcode, "error")
+        self.ins_Cxkk()
 
     def ins_DXXX(self):
         log("Instruction Not implemented: DXXX: %s" % self.opcode, "error")
@@ -357,3 +363,29 @@ class cpu():
         # Because SHL means shift left, not multiply
         result = self.gpio[self.vx] * 2
         self.gpio[self.vx] =  result & 0xff
+
+    # SNE Vx, Vy
+    # Skip next instruction if Vx != Vy
+    def ins_9xy0(self):
+        log("[INS] 9xy0", "info", 1)
+        if self.gpio[self.vx] != self.gpio[self.vy]:
+            self.pc += 2
+
+    # LD I, addr
+    # Set I = nnn
+    def ins_Annn(self):
+        addr = self.opcode & 0x0fff
+        self.index = addr
+
+    # JP V0, addr
+    # Jump to location nnn + V0
+    def ins_Bnnn(self):
+        addr = self.opcode & 0x0fff
+        self.pc = 0x200 + addr + self.gpio[0x0] # Note: remove 0x200 offset?
+
+    # RND Vx, byte
+    # Set Vx = random byte AND kk
+    def ins_Cxkk(self):
+        random_byte = random.randint(0x0, 0xff)
+        kk = self.opcode & 0x00ff
+        self.gpio[self.vx] = random_byte & kk
