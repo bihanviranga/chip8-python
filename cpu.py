@@ -160,21 +160,18 @@ class cpu():
     def draw(self):
         if self.should_draw:
             log("[DRAW] Drawing...", "info", 1)
-            for i in range(screen_height): # 32 rows
-                for j in range(screen_width): # 64 cols
-                    index = i * screen_height + j
-                    pixel = self.display_buffer[index]
-                    if pixel == 1:
-                        xpos = j * screen_scale_factor
-                        ypos = i * screen_scale_factor
-                        side = screen_scale_factor
-                        print(index, xpos, ypos, side)
-                        pygame.draw.rect(
-                            self.screen,
-                            (255, 0, 255),
-                            pygame.Rect(xpos, ypos, side, side)
-                        )
-
+            for i in range(len(self.display_buffer)):
+                pixel = self.display_buffer[i]
+                if pixel == 1:
+                    print("index", i)
+                    row = i // screen_width
+                    col = i - (row * screen_width)
+                    print("row", row, "col", col)
+                    xpos = col * screen_scale_factor
+                    ypos = row * screen_scale_factor
+                    print("xpos", xpos, "ypos", ypos)
+                    side = screen_scale_factor
+                    pygame.draw.rect(self.screen, (255, 0, 255), pygame.Rect(xpos, ypos, side, side))
             pygame.display.flip()
 
         # Once finished, reset the variable
@@ -187,13 +184,9 @@ class cpu():
         log("[DRAW] Marking...", "info", 1)
         row = self.vy
         col = self.vx
-        index = row * 20 + col
+        index = row * screen_width + col
         bits = "".join([bin(i)[2:] for i in sprite])
         bit_length = len(bits)
-        # self.display_buffer[0] = 1
-        # self.display_buffer[63] = 1
-        # self.display_buffer[2047] = 1
-        # self.display_buffer[2047-63] = 1
         collision = False
         for i in range(bit_length):
             current = self.display_buffer[index + i]
