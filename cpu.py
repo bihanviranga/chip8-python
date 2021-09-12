@@ -1,5 +1,6 @@
 import random
 import binascii
+import pygame
 
 rom_name = "test_opcode.ch8"
 log_enabled = True
@@ -8,6 +9,9 @@ log_enabled = True
 # 3 = print fewer stuff
 log_level = 1
 
+screen_width = 64
+screen_height = 32
+screen_scale_factor = 8
 
 def log(message, message_type="info", level=3):
     if not log_enabled:
@@ -38,13 +42,13 @@ class cpu():
             self.cycle()
             self.draw()
             # TODO: temp. artificial break
-            if (self.ops_run > 1000):
+            if (self.ops_run > 10000):
                 break
 
     def initialize(self):
         self.memory = [0] * 4096            # 4096 Bytes of memory
         self.gpio = [0] * 16                # registers
-        self.display_buffer = [0] * 64 * 32  # 64x32 screen
+        self.display_buffer = [0] * screen_width * screen_height
         self.stack = []
         self.key_inputs = [0] * 16          # Input keys state - 1 = down position/pressed
         self.opcode = 0
@@ -79,14 +83,34 @@ class cpu():
             0xf: self.ins_FXXX
         }
 
-        # TODO implement this
-        self.fonts = [(i & 0xf) for i in range(80)]
+        self.fonts = [
+            0xF0,0x90,0x90,0x90,0xF0,
+            0x20,0x60,0x20,0x20,0x70,
+            0xF0,0x10,0xF0,0x80,0xF0,
+            0xF0,0x10,0xF0,0x10,0xF0,
+            0x90,0x90,0xF0,0x10,0x10,
+            0xF0,0x80,0xF0,0x10,0xF0,
+            0xF0,0x80,0xF0,0x90,0xF0,
+            0xF0,0x10,0x20,0x40,0x40,
+            0xF0,0x90,0xF0,0x90,0xF0,
+            0xF0,0x90,0xF0,0x10,0xF0,
+            0xF0,0x90,0xF0,0x90,0x90,
+            0xE0,0x90,0xE0,0x90,0xE0,
+            0xF0,0x80,0x80,0x80,0xF0,
+            0xE0,0x90,0x90,0x90,0xE0,
+            0xF0,0x80,0xF0,0x80,0xF0,
+            0xF0,0x80,0xF0,0x80,0x80
+        ]
 
         i = 0
         while i < 80:
             # load 80-char font set
             self.memory[i] = self.fonts[i]
             i += 1
+
+        # initialize display
+        pygame.init()
+        self.screen = pygame.display.set_mode((screen_width * screen_scale_factor, screen_height * screen_scale_factor))
 
     def load_rom(self, rom_path):
         log("Loading ROM %s" % rom_path, "info", 2)
@@ -132,19 +156,51 @@ class cpu():
                 pass
 
     # TODO implement this stub
+    # Actually draws the pixels
     def draw(self):
         if self.should_draw:
             log("[DRAW] Drawing...", "info", 1)
+            for i in range(screen_height): # 32 rows
+                for j in range(screen_width): # 64 cols
+                    index = i * screen_height + j
+                    pixel = self.display_buffer[index]
+                    if pixel == 1:
+                        xpos = j * screen_scale_factor
+                        ypos = i * screen_scale_factor
+                        side = screen_scale_factor
+                        print(index, xpos, ypos, side)
+                        pygame.draw.rect(
+                            self.screen,
+                            (255, 0, 255),
+                            pygame.Rect(xpos, ypos, side, side)
+                        )
+
+            pygame.display.flip()
 
         # Once finished, reset the variable
         self.should_draw = False
 
     # TODO stub
+    # Marks which pixels to draw or erase
     # returns whether collision was true or not
     def mark_pixels(self, sprite):
         log("[DRAW] Marking...", "info", 1)
-        print("sprite:", sprite) # TODO remove
-        return True
+        row = self.vy
+        col = self.vx
+        index = row * 20 + col
+        bits = "".join([bin(i)[2:] for i in sprite])
+        bit_length = len(bits)
+        # self.display_buffer[0] = 1
+        # self.display_buffer[63] = 1
+        # self.display_buffer[2047] = 1
+        # self.display_buffer[2047-63] = 1
+        collision = False
+        for i in range(bit_length):
+            current = self.display_buffer[index + i]
+            if current != bits[i]:
+                collision = True
+            self.display_buffer[index+i] = 1 if bits[i] == '1' else 0
+        return collision
 
     # TODO stub
     # Halt all execution and wait until a key is pressed
