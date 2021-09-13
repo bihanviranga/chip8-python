@@ -11,7 +11,7 @@ log_level = 1
 
 screen_width = 64
 screen_height = 32
-screen_scale_factor = 8
+screen_scale_factor = 16
 
 
 def log(message, message_type="info", level=3):
@@ -184,8 +184,8 @@ class cpu():
     # returns whether collision was true or not
     def mark_pixels(self, sprite):
         log("[DRAW] Marking...", "info", 1)
-        row = self.vy
-        col = self.vx
+        row = self.gpio[self.vy]
+        col = self.gpio[self.vx]
         index = row * screen_width + col
         bits = "".join([bin(i)[2:] for i in sprite])
         bit_length = len(bits)
@@ -451,7 +451,7 @@ class cpu():
     # Set Vx = Vx SHL 1
     def ins_8xyE(self):
         log("[INS] 8xyE", "info", 1)
-        msb = self.gpio[self.vx] & 0x8000
+        msb = self.gpio[self.vx] & 0x0080
         self.gpio[0xf] = msb
         self.gpio[self.vx] = self.gpio[self.vx] << 1
 
@@ -474,7 +474,7 @@ class cpu():
     def ins_Bnnn(self):
         log("[INS] Bnnn", "info", 1)
         addr = self.opcode & 0x0fff
-        self.pc = 0x200 + addr + self.gpio[0x0]  # Note: remove 0x200 offset?
+        self.pc = addr + self.gpio[0x0]
 
     # RND Vx, byte
     # Set Vx = random byte AND kk
@@ -484,6 +484,8 @@ class cpu():
         kk = self.opcode & 0x00ff
         self.gpio[self.vx] = random_byte & kk
 
+    # FIXME: Refer to wikipedia definition and fix this.
+    # There is an issue about not accounting for the width of 8 pixels
     # DRW Vx, Vy, nibble
     # Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision
     def ins_Dxyn(self):
@@ -504,14 +506,16 @@ class cpu():
     # Skip next instruction if key with the value of Vx is pressed
     def ins_Ex9E(self):
         log("[INS] Ex9E", "info", 1)
-        if(self.key_inputs[self.vx] == 1):
+        key = self.gpio[self.vx] & 0x000f
+        if(self.key_inputs[key] == 1):
             self.pc += 2
 
     # SKNP Vx
     # Skip next instruction if key with the value of Vx is not pressed
     def ins_ExA1(self):
         log("[INS] ExA1", "info", 1)
-        if (self.key_inputs[self.vx] == 0):
+        key = self.gpio[self.vx] & 0x000f
+        if (self.key_inputs[key] == 0):
             self.pc += 2
 
     # LD Vx, DT
@@ -525,7 +529,10 @@ class cpu():
     def ins_Fx0A(self):
         log("[INS] Fx0A", "info", 1)
         key = self.wait_for_key()
-        self.gpio[self.vx] = key
+        if key >= 0:
+            self.gpio[self.vx] = key
+        else:
+            self.pc -= 2
 
     # LD DT, Vx
     # Set delay timer = Vx
@@ -543,22 +550,22 @@ class cpu():
     # Set I = I + Vx
     def ins_Fx1E(self):
         log("[INS] Fx1E", "info", 1)
-        self.index = + self.vx
+        self.index += self.gpio[self.vx]
 
     # LD F, Vx
     # Set I = location of sprite for digit Vx
     def ins_Fx29(self):
         log("[INS] Fx29", "info", 1)
-        font_index = self.vx * 5
-        self.index = font_index
+        font_index = self.gpio[self.vx] * 5
+        self.index = font_index & 0xfff
 
     # LD B, Vx
     # Store BCD representation of Vx in memory locations I, I+1, and I+2
     def ins_Fx33(self):
         log("[INS] Fx33", "info", 1)
-        ones = self.vx % 10
-        tens = self.vx % 100 // 10
-        hundreds = self.vx // 100
+        ones = self.gpio[self.vx] % 10
+        tens = (self.gpio[self.vx] % 100) // 10
+        hundreds = self.gpio[self.vx] // 100
         self.memory[self.index + 2] = ones
         self.memory[self.index + 1] = tens
         self.memory[self.index] = hundreds
@@ -568,7 +575,7 @@ class cpu():
     def ins_Fx55(self):
         log("[INS] Fx55", "info", 1)
         limit = self.vx
-        for i in range(limit):
+        for i in range(limit+1):
             self.memory[self.index + i] = self.gpio[i]
 
     # LD Vx, [I]
@@ -576,5 +583,5 @@ class cpu():
     def ins_Fx65(self):
         log("[INS] Fx65", "info", 1)
         limit = self.vx
-        for i in range(limit):
+        for i in range(limit + 1):
             self.gpio[i] = self.memory[self.index + 1]
