@@ -13,6 +13,7 @@ screen_width = 64
 screen_height = 32
 screen_scale_factor = 8
 
+
 def log(message, message_type="info", level=3):
     if not log_enabled:
         return
@@ -50,12 +51,13 @@ class cpu():
         self.gpio = [0] * 16                # registers
         self.display_buffer = [0] * screen_width * screen_height
         self.stack = []
-        self.key_inputs = [0] * 16          # Input keys state - 1 = down position/pressed
+        # Input keys state - 1 = down position/pressed
+        self.key_inputs = [0] * 16
         self.opcode = 0
         self.index = 0
-        self.ops_run = 0 # Temporary - number of ops
+        self.ops_run = 0  # Temporary - number of ops
 
-        self.running = True # power switch
+        self.running = True  # power switch
 
         self.delay_timer = 0
         self.sound_timer = 0
@@ -84,22 +86,22 @@ class cpu():
         }
 
         self.fonts = [
-            0xF0,0x90,0x90,0x90,0xF0,
-            0x20,0x60,0x20,0x20,0x70,
-            0xF0,0x10,0xF0,0x80,0xF0,
-            0xF0,0x10,0xF0,0x10,0xF0,
-            0x90,0x90,0xF0,0x10,0x10,
-            0xF0,0x80,0xF0,0x10,0xF0,
-            0xF0,0x80,0xF0,0x90,0xF0,
-            0xF0,0x10,0x20,0x40,0x40,
-            0xF0,0x90,0xF0,0x90,0xF0,
-            0xF0,0x90,0xF0,0x10,0xF0,
-            0xF0,0x90,0xF0,0x90,0x90,
-            0xE0,0x90,0xE0,0x90,0xE0,
-            0xF0,0x80,0x80,0x80,0xF0,
-            0xE0,0x90,0x90,0x90,0xE0,
-            0xF0,0x80,0xF0,0x80,0xF0,
-            0xF0,0x80,0xF0,0x80,0x80
+            0xF0, 0x90, 0x90, 0x90, 0xF0,
+            0x20, 0x60, 0x20, 0x20, 0x70,
+            0xF0, 0x10, 0xF0, 0x80, 0xF0,
+            0xF0, 0x10, 0xF0, 0x10, 0xF0,
+            0x90, 0x90, 0xF0, 0x10, 0x10,
+            0xF0, 0x80, 0xF0, 0x10, 0xF0,
+            0xF0, 0x80, 0xF0, 0x90, 0xF0,
+            0xF0, 0x10, 0x20, 0x40, 0x40,
+            0xF0, 0x90, 0xF0, 0x90, 0xF0,
+            0xF0, 0x90, 0xF0, 0x10, 0xF0,
+            0xF0, 0x90, 0xF0, 0x90, 0x90,
+            0xE0, 0x90, 0xE0, 0x90, 0xE0,
+            0xF0, 0x80, 0x80, 0x80, 0xF0,
+            0xE0, 0x90, 0x90, 0x90, 0xE0,
+            0xF0, 0x80, 0xF0, 0x80, 0xF0,
+            0xF0, 0x80, 0xF0, 0x80, 0x80
         ]
 
         i = 0
@@ -110,12 +112,13 @@ class cpu():
 
         # initialize display
         pygame.init()
-        self.screen = pygame.display.set_mode((screen_width * screen_scale_factor, screen_height * screen_scale_factor))
+        self.screen = pygame.display.set_mode(
+            (screen_width * screen_scale_factor, screen_height * screen_scale_factor))
 
     def load_rom(self, rom_path):
         log("Loading ROM %s" % rom_path, "info", 2)
 
-        piece_size = 1 # How many bytes to read at once
+        piece_size = 1  # How many bytes to read at once
         with open(rom_path, "rb") as rom_file:
             for i in range(len(self.memory)):
                 piece = rom_file.read(piece_size)
@@ -136,8 +139,8 @@ class cpu():
         # an opcode is 2 bytes long
         self.pc += 2
 
-        extracted_op = (self.opcode & 0xf000 )>> 12  # shouldn't shift?
-        self.ops_run += 1 # Temporary
+        extracted_op = (self.opcode & 0xf000) >> 12  # shouldn't shift?
+        self.ops_run += 1  # Temporary
 
         try:
             # Call the necessary method
@@ -170,7 +173,8 @@ class cpu():
                     ypos = row * screen_scale_factor
                     print("xpos", xpos, "ypos", ypos)
                     side = screen_scale_factor
-                    pygame.draw.rect(self.screen, (255, 0, 255), pygame.Rect(xpos, ypos, side, side))
+                    pygame.draw.rect(self.screen, (255, 0, 255),
+                                     pygame.Rect(xpos, ypos, side, side))
             pygame.display.flip()
 
         # Once finished, reset the variable
@@ -207,9 +211,11 @@ class cpu():
             elif (nibble == 0xe):
                 self.ins_00EE()
             else:
-                log("[00EX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
+                log("[00EX] Ignoring unknown instruction: %04x" %
+                    self.opcode, "info", 2)
         else:
-            log("[0XXX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
+            log("[0XXX] Ignoring unknown instruction: %04x" %
+                self.opcode, "info", 2)
 
     def ins_1XXX(self):
         self.ins_1nnn()
@@ -228,7 +234,8 @@ class cpu():
         if (nibble == 0x0):
             self.ins_5xy0()
         else:
-            log("[5XXX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
+            log("[5XXX] Ignoring unknown instruction: %04x" %
+                self.opcode, "info", 2)
 
     def ins_6XXX(self):
         self.ins_6xkk()
@@ -257,8 +264,8 @@ class cpu():
         elif (nibble == 0xE):
             self.ins_8xyE()
         else:
-            log("[8XXX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
-
+            log("[8XXX] Ignoring unknown instruction: %04x" %
+                self.opcode, "info", 2)
 
     def ins_9XXX(self):
         self.ins_9xy0()
@@ -282,8 +289,8 @@ class cpu():
         elif (low_byte == 0xA1):
             self.ins_ExA1()
         else:
-            log("[EXXX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
-
+            log("[EXXX] Ignoring unknown instruction: %04x" %
+                self.opcode, "info", 2)
 
     def ins_FXXX(self):
         low_byte = self.opcode & 0x00ff
@@ -306,7 +313,8 @@ class cpu():
         elif (low_byte == 0x65):
             self.ins_Fx65()
         else:
-            log("[FXXX] Ignoring unknown instruction: %04x" % self.opcode, "info", 2)
+            log("[FXXX] Ignoring unknown instruction: %04x" %
+                self.opcode, "info", 2)
 
     # CLS
     # Clear the display
@@ -418,7 +426,7 @@ class cpu():
         else:
             self.gpio[0xf] = 0x0
         self.gpio[self.vx] = self.gpio[self.vx] - self.gpio[self.vy]
-        self.gpio[self.vx] &= 0xff # Wrap values above 0xff to 8 bits
+        self.gpio[self.vx] &= 0xff  # Wrap values above 0xff to 8 bits
 
     # SHR Vx {, VY}
     # Set Vx = Vx SHR 1
@@ -445,7 +453,7 @@ class cpu():
         log("[INS] 8xyE", "info", 1)
         msb = self.gpio[self.vx] & 0x8000
         self.gpio[0xf] = msb
-        self.gpio[self.vx] =  self.gpio[self.vx] << 1
+        self.gpio[self.vx] = self.gpio[self.vx] << 1
 
     # SNE Vx, Vy
     # Skip next instruction if Vx != Vy
@@ -466,7 +474,7 @@ class cpu():
     def ins_Bnnn(self):
         log("[INS] Bnnn", "info", 1)
         addr = self.opcode & 0x0fff
-        self.pc = 0x200 + addr + self.gpio[0x0] # Note: remove 0x200 offset?
+        self.pc = 0x200 + addr + self.gpio[0x0]  # Note: remove 0x200 offset?
 
     # RND Vx, byte
     # Set Vx = random byte AND kk
@@ -504,7 +512,7 @@ class cpu():
     def ins_ExA1(self):
         log("[INS] ExA1", "info", 1)
         if (self.key_inputs[self.vx] == 0):
-            self.pc +=2
+            self.pc += 2
 
     # LD Vx, DT
     # Set Vx = delay timer value
@@ -535,7 +543,7 @@ class cpu():
     # Set I = I + Vx
     def ins_Fx1E(self):
         log("[INS] Fx1E", "info", 1)
-        self.index =+ self.vx
+        self.index = + self.vx
 
     # LD F, Vx
     # Set I = location of sprite for digit Vx
