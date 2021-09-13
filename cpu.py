@@ -155,7 +155,6 @@ class cpu():
                 # TODO play sound here, while sound timer is on
                 pass
 
-    # TODO implement this stub
     # Actually draws the pixels
     def draw(self):
         if self.should_draw:
@@ -177,7 +176,6 @@ class cpu():
         # Once finished, reset the variable
         self.should_draw = False
 
-    # TODO stub
     # Marks which pixels to draw or erase
     # returns whether collision was true or not
     def mark_pixels(self, sprite):
@@ -427,14 +425,8 @@ class cpu():
     def ins_8xy6(self):
         log("[INS] 8xy6", "info", 1)
         lsb = self.gpio[self.vx] & 0x0001
-        if (lsb == 0x1):
-            self.gpio[0xf] = 0x1
-        else:
-            self.gpio[0xf] = 0x0
-
-        # NOTE: This line might have to be changed.
-        # Because SHR means shift right, not divide
-        self.gpio[self.vx] //= 2
+        self.gpio[0xf] = lsb
+        self.gpio[self.vx] = self.gpio[self.vx] >> 1
 
     # SUBN Vx, Vy
     # Set Vx = Vy - Vx, set VF = NOT borrow
@@ -452,15 +444,8 @@ class cpu():
     def ins_8xyE(self):
         log("[INS] 8xyE", "info", 1)
         msb = self.gpio[self.vx] & 0x8000
-        if (msb == 0x1):
-            self.gpio[0xf] = 0x1
-        else:
-            self.gpio[0xf] = 0x0
-
-        # NOTE: This line might have to be changed.
-        # Because SHL means shift left, not multiply
-        result = self.gpio[self.vx] * 2
-        self.gpio[self.vx] =  result & 0xff
+        self.gpio[0xf] = msb
+        self.gpio[self.vx] =  self.gpio[self.vx] << 1
 
     # SNE Vx, Vy
     # Skip next instruction if Vx != Vy
