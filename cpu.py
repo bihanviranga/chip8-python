@@ -451,9 +451,9 @@ class cpu():
     # Set Vx = Vx SHL 1
     def ins_8xyE(self):
         log("[INS] 8xyE", "info", 1)
-        msb = self.gpio[self.vx] & 0x0080
+        msb = (self.gpio[self.vx] & 0x0080) >> 7
         self.gpio[0xf] = msb
-        self.gpio[self.vx] = self.gpio[self.vx] << 1
+        self.gpio[self.vx] = (self.gpio[self.vx] << 1) & 0xff
 
     # SNE Vx, Vy
     # Skip next instruction if Vx != Vy
