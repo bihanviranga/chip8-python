@@ -379,7 +379,7 @@ class cpu():
     def ins_7xkk(self):
         log("[INS] 7xkk", "info", 1)
         kk = self.opcode & 0x00ff
-        self.gpio[self.vx] += kk
+        self.gpio[self.vx] = (self.gpio[self.vx] + kk) & 0xff
 
     # LD Vx, Vy
     # Set Vx = Vy
