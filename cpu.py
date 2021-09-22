@@ -7,7 +7,7 @@ log_enabled = True
 # 1 = print everything
 # 2 = print few stuff
 # 3 = print fewer stuff
-log_level = 1
+log_level = 2
 
 screen_width = 64
 screen_height = 32
@@ -42,9 +42,6 @@ class cpu():
             # TODO: self.handle_events()
             self.cycle()
             self.draw()
-            # TODO: temp. artificial break
-            if (self.ops_run > 10000):
-                break
 
     def initialize(self):
         self.memory = [0] * 4096            # 4096 Bytes of memory
@@ -55,7 +52,6 @@ class cpu():
         self.key_inputs = [0] * 16
         self.opcode = 0
         self.index = 0
-        self.ops_run = 0  # Temporary - number of ops
 
         self.running = True  # power switch
 
@@ -140,7 +136,6 @@ class cpu():
         self.pc += 2
 
         extracted_op = (self.opcode & 0xf000) >> 12  # shouldn't shift?
-        self.ops_run += 1  # Temporary
 
         try:
             # Call the necessary method
@@ -165,13 +160,10 @@ class cpu():
             for i in range(len(self.display_buffer)):
                 pixel = self.display_buffer[i]
                 if pixel == 1:
-                    print("index", i)
                     row = i // screen_width
                     col = i - (row * screen_width)
-                    print("row", row, "col", col)
                     xpos = col * screen_scale_factor
                     ypos = row * screen_scale_factor
-                    print("xpos", xpos, "ypos", ypos)
                     side = screen_scale_factor
                     pygame.draw.rect(self.screen, (255, 0, 255),
                                      pygame.Rect(xpos, ypos, side, side))
@@ -182,19 +174,27 @@ class cpu():
 
     # Marks which pixels to draw or erase
     # returns whether collision was true or not
-    def mark_pixels(self, sprite):
+    def mark_pixels(self, x_cord, y_cord, sprite):
         log("[DRAW] Marking...", "info", 1)
-        row = self.gpio[self.vy]
-        col = self.gpio[self.vx]
-        index = row * screen_width + col
-        bits = "".join([bin(i)[2:] for i in sprite])
-        bit_length = len(bits)
+        row = y_cord
+        col = x_cord
         collision = False
-        for i in range(bit_length):
-            current = self.display_buffer[index + i]
-            if current != bits[i]:
-                collision = True
-            self.display_buffer[index+i] = 1 if bits[i] == '1' else 0
+
+        for sprite_row in range(len(sprite)):
+            sprite_start_index = (row * screen_width + col) + \
+                (sprite_row * screen_width)
+            bits = format(sprite[sprite_row], "#010b")
+            bit_string = bits[2:]
+            for bit_index in range(len(bit_string)):
+                display_buffer_index = sprite_start_index + bit_index
+                current_pixel = self.display_buffer[display_buffer_index]
+                new_pixel = 1 if bit_string[bit_index] == '1' else 0
+                if current_pixel == 1 and new_pixel == 0:
+                    # Pixel going from set to unset
+                    collision = True
+
+                self.display_buffer[display_buffer_index] = new_pixel
+
         return collision
 
     # TODO stub
@@ -484,18 +484,21 @@ class cpu():
         kk = self.opcode & 0x00ff
         self.gpio[self.vx] = random_byte & kk
 
-    # FIXME: Refer to wikipedia definition and fix this.
-    # There is an issue about not accounting for the width of 8 pixels
     # DRW Vx, Vy, nibble
     # Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision
     def ins_Dxyn(self):
         log("[INS] Dxyn", "info", 1)
 
         self.should_draw = True
-        size = self.opcode & 0x000f
-        start = self.index
-        sprite = self.memory[start:start+size]
-        collision = self.mark_pixels(sprite)
+
+        x_cord = self.gpio[self.vx]
+        y_cord = self.gpio[self.vy]
+        height = self.opcode & 0x000f
+
+        # Each memory location holds an int, which is a row of pixels
+        sprite = self.memory[self.index: self.index + height]
+
+        collision = self.mark_pixels(x_cord, y_cord, sprite)
 
         if (collision):
             self.gpio[0xf] = 0x1
