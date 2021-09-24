@@ -1,5 +1,6 @@
 import random
 import binascii
+import sys
 import pygame
 
 rom_name = "test_opcode.ch8"
@@ -39,7 +40,7 @@ class cpu():
         self.load_rom(rom_name)
 
         while self.running:
-            # TODO: self.handle_events()
+            self.handle_events()
             self.cycle()
             self.draw()
 
@@ -202,6 +203,12 @@ class cpu():
     def wait_for_key(self):
         log("[INPUT] Waiting for key", "info", 1)
         return 0x1
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
     def ins_0XXX(self):
         if (self.vx == 0x0 and self.vy == 0xe):
