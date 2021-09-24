@@ -13,6 +13,8 @@ log_level = 2
 screen_width = 64
 screen_height = 32
 screen_scale_factor = 10
+screen_bg = (0, 0, 0)
+screen_fg = (255, 0, 255)
 
 key_mappings = [
     pygame.K_0,
@@ -177,6 +179,7 @@ class cpu():
     def draw(self):
         if self.should_draw:
             log("[DRAW] Drawing...", "info", 1)
+            self.screen.fill(screen_bg)
             for i in range(len(self.display_buffer)):
                 pixel = self.display_buffer[i]
                 if pixel == 1:
@@ -185,7 +188,7 @@ class cpu():
                     xpos = col * screen_scale_factor
                     ypos = row * screen_scale_factor
                     side = screen_scale_factor
-                    pygame.draw.rect(self.screen, (255, 0, 255),
+                    pygame.draw.rect(self.screen, screen_fg,
                                      pygame.Rect(xpos, ypos, side, side))
             pygame.display.flip()
 
@@ -217,7 +220,6 @@ class cpu():
 
         return collision
 
-    # TODO stub
     # Halt all execution and wait until a key is pressed
     def wait_for_key(self):
         log("[INPUT] Waiting for key", "info", 1)
@@ -227,13 +229,11 @@ class cpu():
             if event.type == pygame.QUIT:
                 self.emulator_quit()
             elif event.type == pygame.KEYDOWN:
-                try:
-                    key_index = key_mappings.index(event.key)
-                    self.key_inputs[key_index] = 1
-                except:
-                    pass
-
-        return 0x1
+                key_index = self.mark_keys(event.key, 1)
+                if key_index == -1:
+                    continue
+                return key_index
+        return -1
 
     # Handles quit, key up, key down events
     def handle_events(self):
@@ -256,9 +256,10 @@ class cpu():
             key_index = key_mappings.index(key)
             self.key_inputs[key_index] = position
             log("[INPUT] Key %s %d" % ('up' if position == 0 else 'down', key_index), "info", 1)
+            return key_index
         except:
             # This key is not in the 16 keys we want. Ignoring.
-            pass
+            return -1
 
     def emulator_quit(self):
         log("[INPUT] Quit event received", "info", 2)
