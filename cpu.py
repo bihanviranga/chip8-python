@@ -12,7 +12,26 @@ log_level = 2
 
 screen_width = 64
 screen_height = 32
-screen_scale_factor = 16
+screen_scale_factor = 10
+
+key_mappings = [
+    pygame.K_0,
+    pygame.K_1,
+    pygame.K_2,
+    pygame.K_3,
+    pygame.K_4,
+    pygame.K_5,
+    pygame.K_6,
+    pygame.K_7,
+    pygame.K_8,
+    pygame.K_9,
+    pygame.K_a,
+    pygame.K_b,
+    pygame.K_c,
+    pygame.K_d,
+    pygame.K_e,
+    pygame.K_f,
+]
 
 
 def log(message, message_type="info", level=3):
@@ -49,7 +68,7 @@ class cpu():
         self.gpio = [0] * 16                # registers
         self.display_buffer = [0] * screen_width * screen_height
         self.stack = []
-        # Input keys state - 1 = down position/pressed
+        # Input keys state : 1 = down position/pressed
         self.key_inputs = [0] * 16
         self.opcode = 0
         self.index = 0
@@ -202,13 +221,49 @@ class cpu():
     # Halt all execution and wait until a key is pressed
     def wait_for_key(self):
         log("[INPUT] Waiting for key", "info", 1)
+        key_pressed = False
+        while not key_pressed:
+            event = pygame.event.wait()
+            if event.type == pygame.QUIT:
+                self.emulator_quit()
+            elif event.type == pygame.KEYDOWN:
+                try:
+                    key_index = key_mappings.index(event.key)
+                    self.key_inputs[key_index] = 1
+                except:
+                    pass
+
         return 0x1
 
+    # Handles quit, key up, key down events
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                self.emulator_quit()
+            elif event.type == pygame.KEYDOWN:
+                self.mark_keys(event.key, 1)
+            elif event.type == pygame.KEYUP:
+                self.mark_keys(event.key, 0)
+
+    # position:
+    # 0 = key up
+    # 1 = key down
+    def mark_keys(self, key, position):
+        if key == pygame.K_q:
+            self.emulator_quit()
+
+        try:
+            key_index = key_mappings.index(key)
+            self.key_inputs[key_index] = position
+            log("[INPUT] Key %s %d" % ('up' if position == 0 else 'down', key_index), "info", 1)
+        except:
+            # This key is not in the 16 keys we want. Ignoring.
+            pass
+
+    def emulator_quit(self):
+        log("[INPUT] Quit event received", "info", 2)
+        pygame.quit()
+        sys.exit()
 
     def ins_0XXX(self):
         if (self.vx == 0x0 and self.vy == 0xe):
