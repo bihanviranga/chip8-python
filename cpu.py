@@ -578,7 +578,7 @@ class cpu():
     def ins_Fx55(self):
         log("[INS] Fx55", "info", 1)
         limit = self.vx
-        for i in range(limit+1):
+        for i in range(limit + 1):
             self.memory[self.index + i] = self.gpio[i]
 
     # LD Vx, [I]
@@ -587,4 +587,4 @@ class cpu():
         log("[INS] Fx65", "info", 1)
         limit = self.vx
         for i in range(limit + 1):
-            self.gpio[i] = self.memory[self.index + 1]
+            self.gpio[i] = self.memory[self.index + i]
