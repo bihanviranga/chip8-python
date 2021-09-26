@@ -60,10 +60,12 @@ class cpu():
         self.initialize()
         self.load_rom(rom_name)
 
+        clock = pygame.time.Clock()
         while self.running:
             self.handle_events()
             self.cycle()
             self.draw()
+            clock.tick(600)
 
     def initialize(self):
         self.memory = [0] * 4096            # 4096 Bytes of memory
@@ -216,7 +218,7 @@ class cpu():
                     # Pixel going from set to unset
                     collision = True
 
-                self.display_buffer[display_buffer_index] = new_pixel
+                self.display_buffer[display_buffer_index] ^= new_pixel
 
         return collision
 
