@@ -3,32 +3,9 @@ import binascii
 import sys
 import pygame
 from util import log
+import consts
 
-
-screen_width = 64
-screen_height = 32
-screen_scale_factor = 10
-screen_bg = (0, 0, 0)
-screen_fg = (255, 0, 255)
-
-key_mappings = [
-    pygame.K_0,
-    pygame.K_1,
-    pygame.K_2,
-    pygame.K_3,
-    pygame.K_4,
-    pygame.K_5,
-    pygame.K_6,
-    pygame.K_7,
-    pygame.K_8,
-    pygame.K_9,
-    pygame.K_a,
-    pygame.K_b,
-    pygame.K_c,
-    pygame.K_d,
-    pygame.K_e,
-    pygame.K_f,
-]
+rom_name = sys.argv[1]
 
 class cpu():
     def main(self):
@@ -45,7 +22,7 @@ class cpu():
     def initialize(self):
         self.memory = [0] * 4096            # 4096 Bytes of memory
         self.gpio = [0] * 16                # registers
-        self.display_buffer = [0] * screen_width * screen_height
+        self.display_buffer = [0] * consts.screen_width * consts.screen_height
         self.stack = []
         # Input keys state : 1 = down position/pressed
         self.key_inputs = [0] * 16
@@ -80,24 +57,7 @@ class cpu():
             0xf: self.ins_FXXX
         }
 
-        self.fonts = [
-            0xF0, 0x90, 0x90, 0x90, 0xF0,
-            0x20, 0x60, 0x20, 0x20, 0x70,
-            0xF0, 0x10, 0xF0, 0x80, 0xF0,
-            0xF0, 0x10, 0xF0, 0x10, 0xF0,
-            0x90, 0x90, 0xF0, 0x10, 0x10,
-            0xF0, 0x80, 0xF0, 0x10, 0xF0,
-            0xF0, 0x80, 0xF0, 0x90, 0xF0,
-            0xF0, 0x10, 0x20, 0x40, 0x40,
-            0xF0, 0x90, 0xF0, 0x90, 0xF0,
-            0xF0, 0x90, 0xF0, 0x10, 0xF0,
-            0xF0, 0x90, 0xF0, 0x90, 0x90,
-            0xE0, 0x90, 0xE0, 0x90, 0xE0,
-            0xF0, 0x80, 0x80, 0x80, 0xF0,
-            0xE0, 0x90, 0x90, 0x90, 0xE0,
-            0xF0, 0x80, 0xF0, 0x80, 0xF0,
-            0xF0, 0x80, 0xF0, 0x80, 0x80
-        ]
+        self.fonts = consts.fonts.copy()
 
         i = 0
         while i < 80:
@@ -108,7 +68,7 @@ class cpu():
         # initialize display
         pygame.init()
         self.screen = pygame.display.set_mode(
-            (screen_width * screen_scale_factor, screen_height * screen_scale_factor))
+            (consts.screen_width * consts.screen_scale_factor, consts.screen_height * consts.screen_scale_factor))
 
     def load_rom(self, rom_path):
         log("Loading ROM %s" % rom_path, "info", 2)
@@ -156,16 +116,16 @@ class cpu():
     def draw(self):
         if self.should_draw:
             log("[DRAW] Drawing...", "info", 1)
-            self.screen.fill(screen_bg)
+            self.screen.fill(consts.screen_bg)
             for i in range(len(self.display_buffer)):
                 pixel = self.display_buffer[i]
                 if pixel == 1:
-                    row = i // screen_width
-                    col = i - (row * screen_width)
-                    xpos = col * screen_scale_factor
-                    ypos = row * screen_scale_factor
-                    side = screen_scale_factor
-                    pygame.draw.rect(self.screen, screen_fg,
+                    row = i // consts.screen_width
+                    col = i - (row * consts.screen_width)
+                    xpos = col * consts.screen_scale_factor
+                    ypos = row * consts.screen_scale_factor
+                    side = consts.screen_scale_factor
+                    pygame.draw.rect(self.screen, consts.screen_fg,
                                      pygame.Rect(xpos, ypos, side, side))
             pygame.display.flip()
 
@@ -181,8 +141,8 @@ class cpu():
         collision = False
 
         for sprite_row in range(len(sprite)):
-            sprite_start_index = (row * screen_width + col) + \
-                (sprite_row * screen_width)
+            sprite_start_index = (row * consts.screen_width + col) + \
+                (sprite_row * consts.screen_width)
             bits = format(sprite[sprite_row], "#010b")
             bit_string = bits[2:]
             for bit_index in range(len(bit_string)):
@@ -230,7 +190,7 @@ class cpu():
             self.emulator_quit()
 
         try:
-            key_index = key_mappings.index(key)
+            key_index = consts.key_mappings.index(key)
             self.key_inputs[key_index] = position
             log("[INPUT] Key %s %d" % ('up' if position == 0 else 'down', key_index), "info", 1)
             return key_index
