@@ -18,6 +18,8 @@ class cpu():
             self.cycle()
             self.draw()
             clock.tick(600)
+            # if (self.ops_run > 100000):
+                # self.running = False
 
     def initialize(self):
         self.memory = [0] * 4096            # 4096 Bytes of memory
@@ -28,6 +30,8 @@ class cpu():
         self.key_inputs = [0] * 16
         self.opcode = 0
         self.index = 0
+
+        # self.ops_run = 0
 
         self.running = True  # power switch
 
@@ -98,10 +102,11 @@ class cpu():
 
         try:
             # Call the necessary method
-            # self.func_map[extracted_op]()
             self.func_map[extracted_op]()
         except:
             log("Unknown instruction: %x" % self.opcode, "error")
+
+        # self.ops_run += 1
 
         # decrement timers
         if self.delay_timer > 0:
