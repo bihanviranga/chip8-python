@@ -2,10 +2,15 @@ import random
 import binascii
 import sys
 import pygame
-from util import log
 import consts
+from log import log
 
-rom_name = sys.argv[1]
+rom_name = ""
+try:
+    rom_name = sys.argv[1]
+except:
+    log("Please specify a rom name", "error", 3)
+    sys.exit()
 
 class cpu():
     def main(self):
