@@ -26,6 +26,8 @@ class cpu():
             # if (self.ops_run > 100000):
                 # self.running = False
 
+        self.emulator_quit()
+
     def initialize(self):
         self.memory = [0] * 4096            # 4096 Bytes of memory
         self.gpio = [0] * 16                # registers
@@ -172,9 +174,14 @@ class cpu():
         log("[INPUT] Waiting for key", "info", 1)
         key_pressed = False
         while not key_pressed:
+            # Stop waiting if quit signal is received
+            if self.running == False:
+                return -1
+
             event = pygame.event.wait()
             if event.type == pygame.QUIT:
-                self.emulator_quit()
+                self.running = False
+                return -1
             elif event.type == pygame.KEYDOWN:
                 key_index = self.mark_keys(event.key, 1)
                 if key_index == -1:
@@ -186,7 +193,7 @@ class cpu():
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.emulator_quit()
+                self.running = False
             elif event.type == pygame.KEYDOWN:
                 self.mark_keys(event.key, 1)
             elif event.type == pygame.KEYUP:
@@ -197,7 +204,8 @@ class cpu():
     # 1 = key down
     def mark_keys(self, key, position):
         if key == pygame.K_q:
-            self.emulator_quit()
+            self.running = False
+            return -1
 
         try:
             key_index = consts.key_mappings.index(key)
@@ -209,7 +217,7 @@ class cpu():
             return -1
 
     def emulator_quit(self):
-        log("[INPUT] Quit event received", "info", 2)
+        log("[POWER] Shutting down...", "info", 2)
         pygame.quit()
         sys.exit()
 
