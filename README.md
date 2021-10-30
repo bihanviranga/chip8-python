@@ -1,5 +1,7 @@
 # Chip 8 emulator
 
+Still under development. Created using python and pygame.
+
 ![image](doc/screen.png)
 
 ## Installation
