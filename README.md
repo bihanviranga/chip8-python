@@ -30,5 +30,4 @@ pip install -r requirements.txt
 - Create a GUI component to allow changing config (open files, change keymap, etc)
 
 ## Acknowledgements
-`test_opcode.ch8` from:
-https://github.com/corax89/chip8-test-rom
+- `test_opcode.ch8` from [corax89/chip8-test-rom](https://github.com/corax89/chip8-test-rom) - used under MIT license.
